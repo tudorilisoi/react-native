@@ -613,6 +613,7 @@ class VirtualizedList extends React.PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
+    this._layoutFunctions = null;
     if (this._isNestedWithSameOrientation()) {
       this.context.virtualizedList.unregisterAsNestedChild({
         key: this.props.listKey || this._getCellKey(),
@@ -642,6 +643,15 @@ class VirtualizedList extends React.PureComponent<Props, State> {
       ),
       last: Math.max(0, Math.min(prevState.last, getItemCount(data) - 1)),
     };
+  }
+
+  _createLayoutFunction(key, ii) {
+    this._layoutFunctions = this._layoutFunctions || {};
+    const k = '' + key + ii;
+    if (this._layoutFunctions[k] === undefined) {
+      this._layoutFunctions[k] = e => this._onCellLayout(e, key, ii);
+    }
+    return this._layoutFunctions[k];
   }
 
   _pushCells(
@@ -685,7 +695,7 @@ class VirtualizedList extends React.PureComponent<Props, State> {
           key={key}
           prevCellKey={prevCellKey}
           onUpdateSeparators={this._onUpdateSeparators}
-          onLayout={e => this._onCellLayout(e, key, ii)}
+          onLayout={this._createLayoutFunction(key, ii)}
           onUnmount={this._onCellUnmount}
           parentProps={this.props}
           ref={ref => {
